@@ -188,4 +188,60 @@ dim(filtered)
 dim(unfiltered)
 ```
 
+```{r}
+## -- normalization by deconvolution (removing composition bias) -- ##
+
+library(scran)
+set.seed(100)
+clust.guiu <- quickCluster(filtered) # first do quick clustering - cells in each clusterare 
+#normalized separately and the size factors are rescaled to be comparable across clusters
+table(clust.guiu) # how many clusters and how many cells in each
+
+
+```
+
+```{r}
+lib.sf.guiu <- librarySizeFactors(filtered)
+summary(lib.sf.guiu)
+hist(log10(lib.sf.guiu), xlab="Log10[Size factor]", col='grey80')
+decov.sf.guiu<-calculateSumFactors(filtered, cluster=clust.guiu)
+summary(decov.sf.guiu)
+hist(log10(decov.sf.guiu), xlab="Log10[Size factor]", col='grey80')
+
+```
+
+```{r}
+filtered <- computeSumFactors(filtered, cluster=clust.guiu)
+filtered <- logNormCounts(filtered)
+summary(sizeFactors(filtered))
+assays(filtered) # now there are two assays the counts & the log normalized counts just made
+
+```
+
+```{r}
+## -- modeling the variance and selection highly variable genes (HVGs) -- ##
+
+set.seed(101)
+filtered.pois <- modelGeneVarByPoisson(filtered)
+filtered.pois <- filtered.pois[order(filtered.pois$bio, decreasing=TRUE),]
+head(filtered.pois)
+
+top.genes <- getTopHVGs(filtered.pois, prop=0.1) # keeps the top 10% as HGVs
+length(top.genes) #1453 genes
+
+
+```
+
+```{r}
+set.seed(101)
+filtered.var <- modelGeneVar(filtered)
+filtered.var <- filtered.var[order(filtered.var$bio, decreasing=TRUE),]
+head(filtered.var)
+
+top.genes.var <- getTopHVGs(filtered.var, prop=0.1) # keeps the top 10% as HGVs
+length(top.genes.var) #1240 genes
+top.genes.varFDR <- getTopHVGs(filtered.var, fdr.threshold = 0.05) 
+length(top.genes.varFDR) #1240 genes
+
+```
 
