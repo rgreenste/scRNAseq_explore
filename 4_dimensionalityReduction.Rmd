@@ -1,0 +1,83 @@
+---
+title: "Dimensionality Reduction and Plotting"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Dependencies
+
+Load the major packages needed for this analysis first. Additional packages will be loaded as needed.
+
+```{r, echo=TRUE}
+# dependencies needed
+library(SingleCellExperiment)
+library(scater)
+library(scran)
+library(uwot)
+library(Rtsne)
+```
+
+## Importing Mouse Genome Annotation
+```{r, echo=TRUE}
+## -- Dimensionality Reduction -- ##
+
+set.seed(101)
+filtered.denoised <- denoisePCA(filtered, 
+                                subset.row=top.genes.varFDR, 
+                                technical=filtered.var)
+# convert rownames to gene symbol
+rownames(filtered.denoised)<-rowData(filtered.denoised)$Symbol
+
+```
+
+
+```{r, echo=TRUE}
+
+set.seed(102)
+filtered.denoised <- runTSNE(filtered.denoised, dimred="PCA")
+
+g <- buildSNNGraph(filtered.denoised, k=10, use.dimred = 'PCA')
+clust <- igraph::cluster_walktrap(g)$membership
+table(clust)
+filtered.denoised$cluster <- factor(clust)
+plotReducedDim(filtered.denoised, dimred="TSNE", colour_by="cluster")
+
+```
+
+```{r}
+library(org.Mm.eg.db)
+diffMarkers<-mapIds(eDb, keys = c("Lgr5", "Muc2", "Lyz1", "Chga", "Alpi"), 
+       column = "GENEID", keytype = "SYMBOL")
+names(diffMarkers)
+
+```
+
+
+```{r}
+gridExtra::grid.arrange(
+  plotReducedDim(filtered.denoised, dimred="TSNE", colour_by=diffMarkers[1]) +
+    ggtitle(diffMarkers[1]),
+  plotReducedDim(filtered.denoised, dimred="TSNE", colour_by=diffMarkers[2]) +
+    ggtitle(diffMarkers[2]),
+  plotReducedDim(filtered.denoised, dimred="TSNE", colour_by=diffMarkers[3]) +
+    ggtitle(diffMarkers[3]),
+  plotReducedDim(filtered.denoised, dimred="TSNE", colour_by= diffMarkers[4]) +
+    ggtitle(diffMarkers[4]),
+  plotReducedDim(filtered.denoised, dimred="TSNE", colour_by= diffMarkers[5]) +
+    ggtitle(diffMarkers[5]),
+  ncol=3
+)
+```
+
+
+
+```{r, echo = TRUE}
+library(SingleR)
+ref <- MouseRNAseqData()	
+pred <- SingleR(test=filtered.denoised, ref=ref, labels=ref$label.main)
+table(pred$labels)
+```
+
