@@ -87,7 +87,7 @@ table(grepl("^SIRV", rownames(sce.guiu))) # there are no SIRV spike ins
 
 First plot the UMI's per barcode by barcode rank. Allows us to determine "knee" and "inflection point" in the curve. Beyond the inflection point, there is a sharp decline in UMI's per barcode.
 
-```{r, echo=TRUE}
+```{r, echo=TRUE, warning=FALSE}
 # -- compare barcode rank to total UMI count  -- #
 
 barcodeRank <- barcodeRanks(counts(sce.guiu))

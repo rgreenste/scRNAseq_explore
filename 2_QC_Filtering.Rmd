@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Load the major packages needed for this analysis first. Additional packages will be loaded as needed.
 
-```{r, echo=TRUE}
+```{r, message=FALSE, warning=FALSE, echo = TRUE}
 # dependencies needed
 library(SingleCellExperiment)
 library(scater)
@@ -20,7 +20,7 @@ library(Rtsne)
 ```
 
 ## Importing Mouse Genome Annotation
-```{r, echo=TRUE}
+```{r, echo=TRUE, message = FALSE}
 library(AnnotationHub) # load the ensembldb
 ah = AnnotationHub() # create annotation hub object
 
