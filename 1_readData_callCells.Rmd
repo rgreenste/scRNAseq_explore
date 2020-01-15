@@ -1,0 +1,104 @@
+---
+title: "Reading in the Data and Calling Cells"
+author: "RA Greenstein"
+date: "1/14/2020"
+output: 
+      html_document:
+        keep_md: true
+---
+
+
+```{r setup, include=FALSE}
+# dependencies generally needed
+library(SingleCellExperiment)
+library(scater)
+library(scran)
+library(uwot)
+library(Rtsne)
+```
+
+## R Markdown
+
+
+
+```{r}
+## -- reading in the 10x data  -- ##
+
+library(BiocFileCache)
+bfc <- BiocFileCache("./raw_data", ask = FALSE)
+guiu.zip <- bfcrpath(bfc, 
+                    file.path("https://www.ebi.ac.uk/arrayexpress/files",
+                              "E-MTAB-7660/E-MTAB-7660.processed.1.zip"))
+unzip(guiu.zip, exdir = "./raw_data")
+tarPath <- file.path("./raw_data/guiu2019_10xProcessed.tar.gz")
+untar(tarPath,exdir = "./raw_data")
+
+```
+
+## Including Plots
+
+
+
+```{r}
+library(DropletUtils)
+library(Matrix)
+files <- file.path(getwd(), "./raw_data/guiu2019_10xProcessed/raw_gene_bc_matrices/mm10")
+sce.guiu <- read10xCounts(files, col.names=TRUE)
+sce.guiu
+
+```
+
+```{r}
+# do some exploring of this sce 
+dim(sce.guiu)
+assays(sce.guiu)
+
+head(rownames(sce.guiu))# confirmed annotation with Ensembl notation
+
+head(rowData(sce.guiu)) # annotated with gene ID and gene Symbol
+
+names(colData(sce.guiu)) # sample names and cell barcode
+
+table(grepl("^ERCC", rownames(sce.guiu))) # there are no ERCC spike ins
+
+table(grepl("^SIRV", rownames(sce.guiu))) # there are no SIRV spike ins
+
+```
+
+```{r}
+## -- quality control by removing empty droplets-- ##
+
+barcodeRank <- barcodeRanks(counts(sce.guiu))
+# Only showing unique points for plotting speed.
+uniqBc <- !duplicated(barcodeRank$rank)
+plot(barcodeRank$rank[uniqBc], barcodeRank$total[uniqBc], log="xy",
+     xlab="Barcode Rabk", ylab="Total UMI count", cex.lab=1.2)
+
+abline(h=metadata(barcodeRank)$inflection, col="red", lty=2)
+abline(h=metadata(barcodeRank)$knee, col="blue", lty=2)
+
+legend("bottomleft", legend=c("Inflection", "Knee"), 
+       col=c("red", "blue"), lty=2, cex=1.2)
+
+```
+
+
+```{r}
+# use emptyDrops function to remove empty drops (uses monte carlo sim so have to set.seed)
+set.seed(101)
+
+# calculates pValues to determine cell from drops with FDR 0.001
+e.out <- emptyDrops(counts(sce.guiu))
+summary(e.out$FDR <= 0.001)
+# subset the sce based on the columns which pass our FDR cutoff of 0.1%
+sce.guiu <- sce.guiu[,which(e.out$FDR <= 0.001)]
+dim(sce.guiu) # now there are only 5289 cells remaining
+
+```
+
+
+
+```{r}
+unfiltered <- sce.guiu # save the sce post removing empty's but before additional QC
+```
+
