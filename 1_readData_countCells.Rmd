@@ -1,0 +1,129 @@
+---
+title: "Reading in the data and removing empty droplets"
+output: github_document
+---
+
+## Overview
+
+An exploratory analysis of public single-cell RNA-seq data from [Guiu et al] https://www.nature.com/articles/s41586-019-1212-5#Sec2 and retrieved from the Single Cell Expression Atlas
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Dependencies
+
+Load the major packages needed for this analysis first. Additional packages will be loaded as needed.
+
+```{r, echo=TRUE}
+
+# dependencies needed
+library(SingleCellExperiment)
+library(scater)
+library(scran)
+library(uwot)
+library(Rtsne)
+```
+
+## Obtain in the data from ArrayExpress
+
+```{r, echo=TRUE}
+
+## -- download and unzip data  -- ##
+
+library(BiocFileCache)
+bfc <- BiocFileCache("./raw_data", ask = FALSE)
+guiu.zip <- bfcrpath(bfc, 
+                    file.path("https://www.ebi.ac.uk/arrayexpress/files",
+                              "E-MTAB-7660/E-MTAB-7660.processed.1.zip"))
+unzip(guiu.zip, exdir = "./raw_data")
+tarPath <- file.path("./raw_data/guiu2019_10xProcessed.tar.gz")
+untar(tarPath,exdir = "./raw_data")
+
+```
+
+## Read the 10x data into a SingleCellExperiment container
+
+Using a dedicated function for data collected from 10X Genomics Chromiun platform, read the raw files into R as a SingleCellExperiment (sce). Take a look at the sce to see what's in there. 
+
+```{r, echo=TRUE}
+## -- reading in the 10x data  -- ##
+
+library(DropletUtils)
+library(Matrix)
+files <- file.path(getwd(), "./raw_data/guiu2019_10xProcessed/raw_gene_bc_matrices/mm10")
+sce.guiu <- read10xCounts(files, col.names=TRUE)
+sce.guiu
+
+```
+
+Additional exploration of the sce. 
+
+(1) How many droplets are present?
+
+(2) How are the genes annotated?
+
+(3) Are there spike in transcripts?
+
+
+```{r, echo=TRUE}
+# do some exploring of this sce 
+dim(sce.guiu) # how many rows and columns
+assays(sce.guiu) # what assays are present
+
+head(rownames(sce.guiu))# confirmed annotation with Ensembl notation
+
+head(rowData(sce.guiu)) # annotated with gene ID and gene Symbol
+
+names(colData(sce.guiu)) # sample names and cell barcode
+
+table(grepl("^ERCC", rownames(sce.guiu))) # there are no ERCC spike ins
+
+table(grepl("^SIRV", rownames(sce.guiu))) # there are no SIRV spike ins
+
+```
+
+## Removing empty droplets
+
+First plot the UMI's per barcode by barcode rank. Allows us to determine "knee" and "inflection point" in the curve. Beyond the inflection point, there is a sharp decline in UMI's per barcode.
+
+```{r, echo=TRUE}
+# -- compare barcode rank to total UMI count  -- #
+
+barcodeRank <- barcodeRanks(counts(sce.guiu))
+# Only showing unique points to speed up the plotting.
+
+uniqBc <- !duplicated(barcodeRank$rank)
+plot(barcodeRank$rank[uniqBc], barcodeRank$total[uniqBc], log="xy",
+     xlab="Barcode Rank", ylab="Total UMI count", cex.lab=1.2)
+abline(h=metadata(barcodeRank)$inflection, col="red", lty=2)
+abline(h=metadata(barcodeRank)$knee, col="blue", lty=2)
+legend("bottomleft", legend=c("Inflection", "Knee"), 
+       col=c("red", "blue"), lty=2, cex=1.2)
+
+```
+
+Next use the emptyDrops function to test whether each barcode expression profile is significantly different from the pool of ambient RNA in flowcell.Compute p-values and apply an FDR threshold to retain cells and remove empty drops.
+
+```{r, echo=TRUE}
+# use emptyDrops function to remove empty drops (uses monte carlo sim so have to set.seed)
+set.seed(101)
+
+# calculates pValues to determine cells from empty drops with FDR 0.001
+e.out <- emptyDrops(counts(sce.guiu))
+summary(e.out$FDR <= 0.001)
+# subset the sce based on the columns which pass our FDR cutoff of 0.1%
+sce.guiu <- sce.guiu[,which(e.out$FDR <= 0.001)]
+dim(sce.guiu) # now there are only 5289 cells remaining
+
+```
+
+## Output
+
+After removing empty drops, output the resulting sce as unfiltered and save the file to the processed_data folder
+
+```{r, echo=TRUE}
+unfiltered <- sce.guiu # save the sce post removing empty's but before additional QC
+saveRDS(unfiltered, file="./processed_data/guiu_unfiltered.rds")
+```
+
