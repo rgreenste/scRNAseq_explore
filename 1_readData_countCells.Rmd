@@ -5,7 +5,7 @@ output: github_document
 
 ## Overview
 
-An exploratory analysis of public single-cell RNA-seq data from [Guiu et al] https://www.nature.com/articles/s41586-019-1212-5#Sec2 and retrieved from the Single Cell Expression Atlas
+An exploratory analysis of public single-cell RNA-seq data from [Guiu et al](https://www.nature.com/articles/s41586-019-1212-5#Sec2) and retrieved from the Single Cell Expression Atlas
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
