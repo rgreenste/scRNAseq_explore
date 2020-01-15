@@ -1,10 +1,14 @@
 ---
-title: "Reading in the Data and Calling Cells"
+title: "Exploring scRNA-seq Data Processing and Analysis"
 output: github_document
 ---
 
-
 ```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
 # dependencies generally needed
 library(SingleCellExperiment)
 library(scater)
@@ -97,4 +101,91 @@ dim(sce.guiu) # now there are only 5289 cells remaining
 ```{r}
 unfiltered <- sce.guiu # save the sce post removing empty's but before additional QC
 ```
+
+
+
+## Importing Mouse Genome Annotation
+```{r}
+library(AnnotationHub) # load the ensembldb
+ah = AnnotationHub() # create annotation hub object
+
+
+```
+
+
+```{r}
+#load emsembl db v98 for mouse
+dbNumber<-names(query(ah, c('Ensembl', 'musculus', 'EnsDb', '98')))
+eDb<-ah[[dbNumber]] 
+keytypes(eDb) # remind me what keys are availble to select records with
+columns(eDb)
+```
+
+```{r}
+## Goal - to retrieve the chromosome location of each gene in sce.guiu to see if it is mtDNA
+chrom<-mapIds(eDb, keys = rowData(sce.guiu)$ID, column = "SEQNAME", keytype = "GENEID")
+# genes belonging to mtDNA as determined from chrom/edb
+mito<-which(chrom=="MT")
+```
+
+```{r}
+# Compute the QC metrics per cell
+library(scater)
+metrics <- perCellQCMetrics(unfiltered, subsets=list(Mito=mito))
+head(metrics)
+
+
+metrics.lib <- isOutlier(metrics$sum, log=TRUE, nmads = 2, type="lower")
+attr(metrics.lib, "thresholds")
+metrics.exprs <- isOutlier(metrics$detected, log=TRUE, nmads = 2,type="lower")
+attr(metrics.exprs, "thresholds")
+metrics.mito <- isOutlier(metrics$subsets_Mito_percent,nmads = 2, type="higher")
+attr(metrics.mito, "thresholds")
+
+
+discard <- metrics.lib | metrics.nexprs | metrics.mito
+```
+
+```{r}
+# Summarize the number of cells removed by which reason.
+DataFrame(libSize=sum(metrics.lib), exprs=sum(metrics.exprs),
+           mitoPercent=sum(metrics.mito), total=sum(discard))
+```
+
+```{r}
+# column bind the states from perCellQC to the original sce now called unfiltered
+colData(unfiltered) <- cbind(colData(unfiltered), metrics)
+# add a new column called discard that includes the logical for metrics.mito
+unfiltered$discard <- discard
+```
+
+```{r, echo=FALSE}
+# take a look at what the filtering did with plots colored by discard identity
+gridExtra::grid.arrange(
+  plotColData(unfiltered, y="sum", colour_by="discard") +
+    scale_y_log10() + ggtitle("total count"),
+  plotColData(unfiltered, y="detected", colour_by="discard") +
+    scale_y_log10() + ggtitle("detected features"),
+  plotColData(unfiltered, y="subsets_Mito_percent",
+    colour_by="discard") + ggtitle("percent mito"),
+  ncol=2
+)
+```
+
+```{r}
+#compare filtering metrics to each other
+plotColData(unfiltered, x="sum", y="detected",
+            colour_by="discard") + scale_x_log10()
+plotColData(unfiltered, x="sum", y="subsets_Mito_percent",
+            colour_by="discard") + scale_x_log10()
+
+```
+
+```{r}
+# Keeping the columns we DON'T want to discard.
+filtered <- unfiltered[,!discard]
+dim(filtered)
+dim(unfiltered)
+```
+
 
