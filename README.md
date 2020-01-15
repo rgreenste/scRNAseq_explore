@@ -7,13 +7,13 @@ exploring single-cell RNA-seq data from [Guiu et al](https://www.nature.com/arti
 
 (1) with SingleCellExperiment and packages including scater and scran
     
-    1_readData_countCells.md
+  1_readData_countCells.md
     
-    2_QC_Filtering.md
+  2_QC_Filtering.md
     
-    3_Normalization.md
+  3_Normalization.md
     
-    4_dimensionalityReduction.md
+  4_dimensionalityReduction.md
     
 (2) with Seurat, TBD
     
