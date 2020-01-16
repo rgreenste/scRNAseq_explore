@@ -1,11 +1,11 @@
 # scRNAseq_explore
 
-single-cell RNA-seq analysis with publically available data for my educational purposes only
+single-cell RNA-seq analysis with publically available data for my own educational purposes 
 
 
-exploring single-cell RNA-seq data from [Guiu et al](https://www.nature.com/articles/s41586-019-1212-5#Sec2)
 
-(1) with SingleCellExperiment and packages including scater and scran
+
+(1) exploring single-cell RNA-seq data from [Guiu et al](https://www.nature.com/articles/s41586-019-1212-5#Sec2) with SingleCellExperiment and packages including scater and scran
     
   1_readData_countCells.md
     
@@ -13,7 +13,9 @@ exploring single-cell RNA-seq data from [Guiu et al](https://www.nature.com/arti
     
   3_Normalization.md
     
-  4_dimensionalityReduction.md
+  4_dimensionalityReduction_outputAnalysis.md
     
+
+
 (2) with Seurat, TBD
     
