@@ -194,7 +194,9 @@ gridExtra::grid.arrange(
 )
 ```
 
-![](2_QC_Filtering_files/figure-markdown_github/unnamed-chunk-10-1.png) Now compare filtering metrics to each other pairwise in scatter plots colored by discard status
+![](2_QC_Filtering_files/figure-markdown_github/unnamed-chunk-10-1.png)
+
+Now compare filtering metrics to each other pairwise in scatter plots colored by discard status
 
 ``` r
 gridExtra::grid.arrange(
