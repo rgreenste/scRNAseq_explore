@@ -19,17 +19,22 @@ library(uwot)
 library(Rtsne)
 ```
 
-## Importing Mouse Genome Annotation
-```{r, echo=TRUE, message = FALSE}
-library(AnnotationHub) # load the ensembldb
-ah = AnnotationHub() # create annotation hub object
-
-
+Loading the unfiltered file which was output by "1_readData_countCells.Rmd"
+```{r, echo = TRUE}
+unfiltered <- readRDS(file="../processed_data/guiu_unfiltered.rds")
 ```
 
+## Importing Mouse Genome Annotation
 
+We need to import the annotation database to determine the chromsome location of genes in the mouse genome in order to annotate genes which are mitochondrial in origin
+
+```{r, echo=TRUE, message = FALSE}
+library(AnnotationHub) 
+ah = AnnotationHub() # create annotation hub object
+```
+
+Now we will query annotation hub for the Ensemnl mouse annotation database version 98 and then load it. 
 ```{r, echo=TRUE}
-
 #search for and then load emsembl db v98 for mouse
 dbNumber<-names(query(ah, c('Ensembl', 'musculus', 'EnsDb', '98')))
 eDb<-ah[[dbNumber]] 
@@ -37,42 +42,49 @@ keytypes(eDb) # remind me what keys are availble to select records with
 columns(eDb)
 ```
 
-```{r}
-unfiltered <- readRDS(file="./processed_data/guiu_unfiltered.rds")
-```
+## Annotating mitochondiral genes
 
-
-```{r, echo=TRUE}
+Determine the chromosome location of each gene found in the 'unfiltered' sce and make a list of genes that are found on the mtDNA
+```{r, message=FALSE, warning=FALSE, echo = TRUE}
 ## Goal - to retrieve the chromosome location of each gene in sce.guiu to see if it is mtDNA
 chrom<-mapIds(eDb, keys = rowData(unfiltered)$ID, column = "SEQNAME", keytype = "GENEID")
 # genes belonging to mtDNA as determined from chrom/edb
 mito<-which(chrom=="MT")
 ```
 
+
+## Computing quality control metrics and calling outliers
+
+Using functions from the package scater, determine the quality control metrics for the unfiltred data - including total count's per cell, number of genes detected per cell, and the percentage of reads which aligned to mitochrondial genes.
 ```{r, echo=TRUE}
 # Compute the QC metrics per cell
-library(scater)
 metrics <- perCellQCMetrics(unfiltered, subsets=list(Mito=mito))
 head(metrics)
-
-
-metrics.lib <- isOutlier(metrics$sum, log=TRUE, nmads = 2, type="lower")
-attr(metrics.lib, "thresholds")
-metrics.exprs <- isOutlier(metrics$detected, log=TRUE, nmads = 2,type="lower")
-attr(metrics.exprs, "thresholds")
-metrics.mito <- isOutlier(metrics$subsets_Mito_percent,nmads = 2, type="higher")
-attr(metrics.mito, "thresholds")
-
-
-discard <- metrics.lib | metrics.exprs | metrics.mito
 ```
 
+Determine outlier cells based on median absolute deviation from the mean (nmads = 2) and combine into a logical, discard.
 ```{r, echo=TRUE}
-# Summarize the number of cells removed by which reason.
-DataFrame(libSize=sum(metrics.lib), exprs=sum(metrics.exprs),
-           mitoPercent=sum(metrics.mito), total=sum(discard))
+# Cell library size
+rm.lib <- isOutlier(metrics$sum, log=TRUE, nmads = 3, type="lower")
+attr(rm.lib, "thresholds") # output the threshold
+# Number of genes detected
+rm.exprs <- isOutlier(metrics$detected, log=TRUE, nmads = 3,type="lower")
+attr(rm.exprs, "thresholds") # output the threshold
+# percent mtDNA transcripts
+rm.mito <- isOutlier(metrics$subsets_Mito_percent,nmads = 2, type="higher")
+attr(rm.mito, "thresholds") # output the threshold
+
+# combine into one logical
+discard <- rm.lib | rm.exprs | rm.mito
 ```
 
+Summarize the number of cells removed based on which reason.
+```{r, echo=TRUE}
+DataFrame(libSize=sum(rm.lib), exprs=sum(rm.exprs),
+           mitoPercent=sum(rm.mito), total=sum(discard))
+```
+
+Now we add back to the SingleCellExperiement the calculated QC metrics via the colData slot and a new column for the discard logical
 ```{r, echo=TRUE}
 # column bind the states from perCellQC to the original sce now called unfiltered
 colData(unfiltered) <- cbind(colData(unfiltered), metrics)
@@ -80,8 +92,12 @@ colData(unfiltered) <- cbind(colData(unfiltered), metrics)
 unfiltered$discard <- discard
 ```
 
+## Examining the results of QC filtering
+
+Next take a look at what the above filtering did via plots colored by discard identity
+
 ```{r, echo=TRUE}
-# take a look at what the filtering did with plots colored by discard identity
+# Violin plots for total counts, # genes detected, and mito% colored by discard status
 gridExtra::grid.arrange(
   plotColData(unfiltered, y="sum", colour_by="discard") +
     scale_y_log10() + ggtitle("total count"),
@@ -92,15 +108,22 @@ gridExtra::grid.arrange(
   ncol=2
 )
 ```
+Now compare filtering metrics to each other pairwise in scatter plots colored by discard status
 
-```{r, echo=TRUE}
-#compare filtering metrics to each other
-plotColData(unfiltered, x="sum", y="detected",
-            colour_by="discard") + scale_x_log10()
-plotColData(unfiltered, x="sum", y="subsets_Mito_percent",
-            colour_by="discard") + scale_x_log10()
+```{r, echo=TRUE, fig.height= 2.5, fig.width=7}
 
+gridExtra::grid.arrange(
+  plotColData(unfiltered, x="sum", y="detected",
+            colour_by="discard") + scale_x_log10() ,
+  plotColData(unfiltered, x="sum", y="subsets_Mito_percent",
+            colour_by="discard") + scale_x_log10(),
+ ncol=2 
+)
 ```
+
+## Discard low quality cells
+
+Output into a new sce called 'filtered' all the cells which do not meet the criteria for discard and then check that the number of cells has decreased
 
 ```{r, echo=TRUE}
 # Keeping the columns we DON'T want to discard.
@@ -109,9 +132,11 @@ dim(unfiltered) # more cells
 dim(filtered) # less cells!
 ```
 
+Save out the new sce to file
+
 ```{r, echo=TRUE}
 
-saveRDS(filtered, file="./processed_data/guiu_filtered.rds") # save the sce post QC
+saveRDS(filtered, file="../processed_data/guiu_filtered.rds") # save the sce post QC
 ```
 
 

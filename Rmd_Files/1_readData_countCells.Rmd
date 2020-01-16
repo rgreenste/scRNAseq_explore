@@ -32,13 +32,13 @@ library(Rtsne)
 ## -- download and unzip data  -- ##
 
 library(BiocFileCache)
-bfc <- BiocFileCache("./raw_data", ask = FALSE)
+bfc <- BiocFileCache("../raw_data", ask = FALSE)
 guiu.zip <- bfcrpath(bfc, 
                     file.path("https://www.ebi.ac.uk/arrayexpress/files",
                               "E-MTAB-7660/E-MTAB-7660.processed.1.zip"))
-unzip(guiu.zip, exdir = "./raw_data")
-tarPath <- file.path("./raw_data/guiu2019_10xProcessed.tar.gz")
-untar(tarPath,exdir = "./raw_data")
+unzip(guiu.zip, exdir = "../raw_data")
+tarPath <- file.path("../raw_data/guiu2019_10xProcessed.tar.gz")
+untar(tarPath, exdir = "../raw_data")
 
 ```
 
@@ -51,7 +51,7 @@ Using a dedicated function for data collected from 10X Genomics Chromiun platfor
 
 library(DropletUtils)
 library(Matrix)
-files <- file.path(getwd(), "./raw_data/guiu2019_10xProcessed/raw_gene_bc_matrices/mm10")
+files <- file.path(getwd(), "../raw_data/guiu2019_10xProcessed/raw_gene_bc_matrices/mm10")
 sce.guiu <- read10xCounts(files, col.names=TRUE)
 sce.guiu
 
