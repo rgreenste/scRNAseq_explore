@@ -4,7 +4,7 @@ Reading in the data and removing empty droplets
 Overview
 --------
 
-An exploratory analysis of public single-cell RNA-seq data from \[Guiu et al\] <https://www.nature.com/articles/s41586-019-1212-5#Sec2> and retrieved from the Single Cell Expression Atlas
+An exploratory analysis of public single-cell RNA-seq data from [Guiu et al](https://www.nature.com/articles/s41586-019-1212-5#Sec2) and retrieved from the Single Cell Expression Atlas
 
 Dependencies
 ------------
@@ -27,18 +27,13 @@ Obtain in the data from ArrayExpress
 ## -- download and unzip data  -- ##
 
 library(BiocFileCache)
-```
-
-    ## Loading required package: dbplyr
-
-``` r
-bfc <- BiocFileCache("./raw_data", ask = FALSE)
+bfc <- BiocFileCache("../raw_data", ask = FALSE)
 guiu.zip <- bfcrpath(bfc, 
                     file.path("https://www.ebi.ac.uk/arrayexpress/files",
                               "E-MTAB-7660/E-MTAB-7660.processed.1.zip"))
-unzip(guiu.zip, exdir = "./raw_data")
-tarPath <- file.path("./raw_data/guiu2019_10xProcessed.tar.gz")
-untar(tarPath,exdir = "./raw_data")
+unzip(guiu.zip, exdir = "../raw_data")
+tarPath <- file.path("../raw_data/guiu2019_10xProcessed.tar.gz")
+untar(tarPath, exdir = "../raw_data")
 ```
 
 Read the 10x data into a SingleCellExperiment container
@@ -51,7 +46,7 @@ Using a dedicated function for data collected from 10X Genomics Chromiun platfor
 
 library(DropletUtils)
 library(Matrix)
-files <- file.path(getwd(), "./raw_data/guiu2019_10xProcessed/raw_gene_bc_matrices/mm10")
+files <- file.path(getwd(), "../raw_data/guiu2019_10xProcessed/raw_gene_bc_matrices/mm10")
 sce.guiu <- read10xCounts(files, col.names=TRUE)
 sce.guiu
 ```
@@ -149,12 +144,6 @@ barcodeRank <- barcodeRanks(counts(sce.guiu))
 uniqBc <- !duplicated(barcodeRank$rank)
 plot(barcodeRank$rank[uniqBc], barcodeRank$total[uniqBc], log="xy",
      xlab="Barcode Rank", ylab="Total UMI count", cex.lab=1.2)
-```
-
-    ## Warning in xy.coords(x, y, xlabel, ylabel, log): 1 y value <= 0 omitted from
-    ## logarithmic plot
-
-``` r
 abline(h=metadata(barcodeRank)$inflection, col="red", lty=2)
 abline(h=metadata(barcodeRank)$knee, col="blue", lty=2)
 legend("bottomleft", legend=c("Inflection", "Knee"), 
@@ -192,5 +181,63 @@ After removing empty drops, output the resulting sce as unfiltered and save the 
 
 ``` r
 unfiltered <- sce.guiu # save the sce post removing empty's but before additional QC
-saveRDS(unfiltered, file="./processed_data/guiu_unfiltered.rds")
+saveRDS(unfiltered, file="../processed_data/guiu_unfiltered.rds")
 ```
+
+``` r
+sessionInfo()
+```
+
+    ## R version 3.6.2 (2019-12-12)
+    ## Platform: x86_64-apple-darwin15.6.0 (64-bit)
+    ## Running under: macOS Sierra 10.12.6
+    ## 
+    ## Matrix products: default
+    ## BLAS:   /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRblas.0.dylib
+    ## LAPACK: /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRlapack.dylib
+    ## 
+    ## locale:
+    ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+    ## 
+    ## attached base packages:
+    ## [1] parallel  stats4    stats     graphics  grDevices utils     datasets 
+    ## [8] methods   base     
+    ## 
+    ## other attached packages:
+    ##  [1] DropletUtils_1.6.1          BiocFileCache_1.10.2       
+    ##  [3] dbplyr_1.4.2                Rtsne_0.15                 
+    ##  [5] uwot_0.1.5                  Matrix_1.2-18              
+    ##  [7] scran_1.14.5                scater_1.14.6              
+    ##  [9] ggplot2_3.2.1               SingleCellExperiment_1.8.0 
+    ## [11] SummarizedExperiment_1.16.1 DelayedArray_0.12.2        
+    ## [13] BiocParallel_1.20.1         matrixStats_0.55.0         
+    ## [15] Biobase_2.46.0              GenomicRanges_1.38.0       
+    ## [17] GenomeInfoDb_1.22.0         IRanges_2.20.2             
+    ## [19] S4Vectors_0.24.2            BiocGenerics_0.32.0        
+    ## 
+    ## loaded via a namespace (and not attached):
+    ##  [1] bitops_1.0-6             bit64_0.9-7              httr_1.4.1              
+    ##  [4] tools_3.6.2              backports_1.1.5          R6_2.4.1                
+    ##  [7] irlba_2.3.3              HDF5Array_1.14.1         vipor_0.4.5             
+    ## [10] DBI_1.1.0                lazyeval_0.2.2           colorspace_1.4-1        
+    ## [13] withr_2.1.2              tidyselect_0.2.5         gridExtra_2.3           
+    ## [16] bit_1.1-14               curl_4.3                 compiler_3.6.2          
+    ## [19] BiocNeighbors_1.4.1      scales_1.1.0             rappdirs_0.3.1          
+    ## [22] stringr_1.4.0            digest_0.6.23            R.utils_2.9.2           
+    ## [25] rmarkdown_2.0            XVector_0.26.0           pkgconfig_2.0.3         
+    ## [28] htmltools_0.4.0          limma_3.42.0             rlang_0.4.2             
+    ## [31] RSQLite_2.2.0            DelayedMatrixStats_1.8.0 R.oo_1.23.0             
+    ## [34] dplyr_0.8.3              RCurl_1.95-4.12          magrittr_1.5            
+    ## [37] BiocSingular_1.2.1       GenomeInfoDbData_1.2.2   Rhdf5lib_1.8.0          
+    ## [40] Rcpp_1.0.3               ggbeeswarm_0.6.0         munsell_0.5.0           
+    ## [43] viridis_0.5.1            R.methodsS3_1.7.1        lifecycle_0.1.0         
+    ## [46] stringi_1.4.5            yaml_2.2.0               edgeR_3.28.0            
+    ## [49] zlibbioc_1.32.0          rhdf5_2.30.1             grid_3.6.2              
+    ## [52] blob_1.2.0               dqrng_0.2.1              crayon_1.3.4            
+    ## [55] lattice_0.20-38          locfit_1.5-9.1           zeallot_0.1.0           
+    ## [58] knitr_1.26               pillar_1.4.3             igraph_1.2.4.2          
+    ## [61] glue_1.3.1               evaluate_0.14            RcppParallel_4.4.4      
+    ## [64] vctrs_0.2.1              gtable_0.3.0             purrr_0.3.3             
+    ## [67] assertthat_0.2.1         xfun_0.12                rsvd_1.0.2              
+    ## [70] viridisLite_0.3.0        tibble_2.1.3             beeswarm_0.2.3          
+    ## [73] memoise_1.1.0            statmod_1.4.33

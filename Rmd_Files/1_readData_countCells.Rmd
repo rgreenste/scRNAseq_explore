@@ -124,10 +124,10 @@ After removing empty drops, output the resulting sce as unfiltered and save the 
 
 ```{r, echo=TRUE}
 unfiltered <- sce.guiu # save the sce post removing empty's but before additional QC
-saveRDS(unfiltered, file="./processed_data/guiu_unfiltered.rds")
+saveRDS(unfiltered, file="../processed_data/guiu_unfiltered.rds")
 ```
 
-```{r}
+```{r, echo=TRUE}
 sessionInfo()
 ```
 

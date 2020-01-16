@@ -108,6 +108,7 @@ gridExtra::grid.arrange(
   ncol=2
 )
 ```
+
 Now compare filtering metrics to each other pairwise in scatter plots colored by discard status
 
 ```{r, echo=TRUE, fig.height= 2.5, fig.width=7}
@@ -140,6 +141,6 @@ saveRDS(filtered, file="../processed_data/guiu_filtered.rds") # save the sce pos
 ```
 
 
-```{r}
+```{r, echo=TRUE}
 sessionInfo()
 ```
