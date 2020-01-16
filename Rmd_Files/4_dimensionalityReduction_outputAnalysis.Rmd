@@ -30,7 +30,7 @@ top.genes.varFDR<-readRDS( file="../processed_data/top.genes.varFDR.rds")
 
 ```
 
-## Dimensionality Reduction by PCA and tSNE
+## Dimensionality Reduction by PCA and t-SNE
 
 First perform dimension reduction by Principal Components Analysis. Choose the number of PC's to retain until the percentage of variance explained reaches the sum of the biological component obtained by variance modelling in "3_Normalization.Rmd".
 ```{r, echo=TRUE}
@@ -70,7 +70,7 @@ multiplot(try10, try30, try50, try75, cols=2)
 ## Examining expression of marker genes across the population
 
 Next, will try to recapitulate some plots from the paper. 
-![Extended Data Fig 3a from Guiu et al.](../guiu_etal_ExtData3A.png)
+![Extended Data Fig 3a from Guiu et al.](./guiu_etal_ExtData3A.png)
 Here are t-SNE plots of epithelial cells from the proximal small intestine showing expression of intestinal stem-cell (Lgr5) and differentiation markers (Muc2, Lyz1, ChgA and Alpi.)
 
 ```{r, message = FALSE, warning = FALSE, echo=TRUE, fig.height= 8, fig.width=9}
@@ -79,7 +79,7 @@ set.seed(102)
 filtered.denoised <- runTSNE(filtered.denoised, dimred="PCA", perplexity=50)
 try50 <- plotReducedDim(filtered.denoised, dimred="TSNE") + ggtitle("perplexity = 50")
 
-# the markers from Guiu et all
+# the markers from Guiu et al
 diffMarkers<-c("Lgr5", "Muc2", "Lyz1", "Chga", "Alpi")
 
 gridExtra::grid.arrange(
@@ -128,8 +128,8 @@ markers.filtered <- findMarkers(filtered.denoised, test="wilcox",
 # using cluster 10 as an example
 markers_clust10<-markers.filtered[[10]]
 
-# take a look at the transcriptional profile of top genes between cluster 5 and the rest
-topGenes10 <- rownames(markers_clust5)[markers_clust10$Top <= 5]
+# take a look at the transcriptional profile of top genes between cluster 10 and the rest
+topGenes10 <- rownames(markers_clust10)[markers_clust10$Top <= 5]
 plotHeatmap(filtered.denoised, features=topGenes10, exprs_values="logcounts", 
     zlim=5, center=TRUE, symmetric=TRUE, cluster_cols=FALSE,
     colour_columns_by="cluster", columns=order(filtered.denoised$cluster),
