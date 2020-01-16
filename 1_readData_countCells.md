@@ -150,7 +150,7 @@ legend("bottomleft", legend=c("Inflection", "Knee"),
        col=c("red", "blue"), lty=2, cex=1.2)
 ```
 
-![](1_readData_countCells_files/figure-markdown_github/unnamed-chunk-5-1.png)
+![](./Rmd_Files/1_readData_countCells_files/figure-markdown_github/unnamed-chunk-5-1.png)
 
 Next use the emptyDrops function to test whether each barcode expression profile is significantly different from the pool of ambient RNA in flowcell.Compute p-values and apply an FDR threshold to retain cells and remove empty drops.
 
