@@ -194,7 +194,7 @@ gridExtra::grid.arrange(
 )
 ```
 
-![](2_QC_Filtering_files/figure-markdown_github/unnamed-chunk-10-1.png)
+![](./Rmd_Files/2_QC_Filtering_files/figure-markdown_github/unnamed-chunk-10-1.png)
 
 Compare filtering metrics to each other pairwise in scatter plots colored by discard status
 
@@ -208,7 +208,7 @@ gridExtra::grid.arrange(
 )
 ```
 
-![](2_QC_Filtering_files/figure-markdown_github/unnamed-chunk-11-1.png)
+![](./Rmd_Files/2_QC_Filtering_files/figure-markdown_github/unnamed-chunk-11-1.png)
 
 Discard low quality cells
 -------------------------

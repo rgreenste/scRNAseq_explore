@@ -61,12 +61,12 @@ try75 <- plotReducedDim(filtered.denoised, dimred="TSNE") + ggtitle("perplexity 
 multiplot(try10, try30, try50, try75, cols=2)
 ```
 
-![](4_dimensionalityReduction_outputAnalysis_files/figure-markdown_github/unnamed-chunk-4-1.png)
+![](./Rmd_Files/4_dimensionalityReduction_outputAnalysis_files/figure-markdown_github/unnamed-chunk-4-1.png)
 
 Examining expression of marker genes across the population
 ----------------------------------------------------------
 
-Next, will try to recapitulate some plots from the paper. ![Extended Data Fig 3a from Guiu et al.](./guiu_etal_ExtData3A.png) Here are t-SNE plots of epithelial cells from the proximal small intestine showing expression of intestinal stem-cell (Lgr5) and differentiation markers (Muc2, Lyz1, ChgA and Alpi.)
+Next, will try to recapitulate some plots from the paper. ![Extended Data Fig 3a from Guiu et al.](../Rmd_Files/guiu_etal_ExtData3A.png) Here are t-SNE plots of epithelial cells from the proximal small intestine showing expression of intestinal stem-cell (Lgr5) and differentiation markers (Muc2, Lyz1, ChgA and Alpi.)
 
 ``` r
 # will proceed with t-SNE plots using perplexity = 50
@@ -92,7 +92,7 @@ gridExtra::grid.arrange(
 )
 ```
 
-![](4_dimensionalityReduction_outputAnalysis_files/figure-markdown_github/unnamed-chunk-5-1.png)
+![](./Rmd_Files/4_dimensionalityReduction_outputAnalysis_files/figure-markdown_github/unnamed-chunk-5-1.png)
 
 These resembled the plots from the paper figure reasonably well.
 
@@ -121,7 +121,7 @@ filtered.denoised$cluster <- factor(clust)
 plotReducedDim(filtered.denoised, dimred="TSNE", colour_by="cluster")
 ```
 
-![](4_dimensionalityReduction_outputAnalysis_files/figure-markdown_github/unnamed-chunk-6-1.png)
+![](./Rmd_Files/4_dimensionalityReduction_outputAnalysis_files/figure-markdown_github/unnamed-chunk-6-1.png)
 
 Identifying marker genes by cluster
 -----------------------------------
@@ -143,7 +143,7 @@ plotHeatmap(filtered.denoised, features=topGenes10, exprs_values="logcounts",
     show_colnames=FALSE)
 ```
 
-![](4_dimensionalityReduction_outputAnalysis_files/figure-markdown_github/unnamed-chunk-7-1.png)
+![](./Rmd_Files/4_dimensionalityReduction_outputAnalysis_files/figure-markdown_github/unnamed-chunk-7-1.png)
 
 ``` r
 # consider marker genes to be differentially expressed if the adjusted p-value is <= 0.001
@@ -240,7 +240,7 @@ filtered.denoised$annotation <- factor(pred$labels)
 plotReducedDim(filtered.denoised, dimred="TSNE", colour_by="annotation")
 ```
 
-![](4_dimensionalityReduction_outputAnalysis_files/figure-markdown_github/unnamed-chunk-8-1.png)
+![](./Rmd_Files/4_dimensionalityReduction_outputAnalysis_files/figure-markdown_github/unnamed-chunk-8-1.png)
 
 Save the resulting files
 

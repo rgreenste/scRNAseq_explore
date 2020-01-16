@@ -109,7 +109,7 @@ Plot log normalized expression of genes with the largest biological component to
 plotExpression(filtered, features=top.genes.varFDR[1:10])
 ```
 
-![](3_Normalization_files/figure-markdown_github/unnamed-chunk-8-1.png)
+![](./Rmd_Files/3_Normalization_files/figure-markdown_github/unnamed-chunk-8-1.png)
 
 Save out the resulting files
 
