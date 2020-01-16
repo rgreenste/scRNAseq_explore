@@ -68,7 +68,7 @@ plotReducedDim(filtered.denoised, dimred="TSNE", colour_by="cluster")
 ![Extended Data Fig 3a from Guiu et al.](../guiu_etal_ExtData3A.png)
 t-SNE plots of epithelial cells from the proximal small intestine showing expression of intestinal stem-cell (Lgr5) and differentiation markers (Muc2, Lyz1, ChgA and Alpi.)
 
-```{r, message = FALSE, warning = FALSE, echo=TRUE}
+```{r, message = FALSE, warning = FALSE, echo=TRUE, fig.height= 8, fig.width=7}
 diffMarkers<-c("Lgr5", "Muc2", "Lyz1", "Chga", "Alpi")
 
 gridExtra::grid.arrange(
@@ -82,7 +82,7 @@ gridExtra::grid.arrange(
     ggtitle(diffMarkers[4]),
   plotReducedDim(filtered.denoised, dimred="TSNE", colour_by= diffMarkers[5]) +
     ggtitle(diffMarkers[5]),
-  ncol=3
+  ncol=2
 )
 ```
 
