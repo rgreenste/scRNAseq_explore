@@ -116,7 +116,7 @@ Save out the resulting files
 ``` r
 saveRDS(filtered, file="../processed_data/guiu_filtered_normalized.rds") # save the sce post norm
 saveRDS(top.genes.varFDR, file="../processed_data/top.genes.varFDR.rds") 
-saveRDS(filtered.var, file="../processed_data/top.genes.varFDR.rds") 
+saveRDS(filtered.var, file="../processed_data/filtered.var.rds") 
 ```
 
 ``` r

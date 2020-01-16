@@ -20,10 +20,21 @@ library(uwot)
 library(Rtsne)
 ```
 
-## Importing Mouse Genome Annotation
-```{r, echo=TRUE}
-## -- Dimensionality Reduction -- ##
+Loading the files which were output by "3_Normalization.Rmd"
+```{r, echo = TRUE}
 
+filtered<-readRDS( file="../processed_data/guiu_filtered_normalized.rds")
+filtered.var<-readRDS(file="../processed_data/filtered.var.rds")
+top.genes.varFDR<-readRDS( file="../processed_data/top.genes.varFDR.rds") 
+ 
+
+```
+
+## Dimensionality Reduction by PCA and tSNE
+
+
+```{r, echo=TRUE}
+# perform PCA for dimension reduction with 
 set.seed(101)
 filtered.denoised <- denoisePCA(filtered, 
                                 subset.row=top.genes.varFDR, 
@@ -31,13 +42,17 @@ filtered.denoised <- denoisePCA(filtered,
 # convert rownames to gene symbol
 rownames(filtered.denoised)<-rowData(filtered.denoised)$Symbol
 
+# perform tSNE for further dimension reduction
+set.seed(102)
+filtered.denoised <- runTSNE(filtered.denoised, dimred="PCA")
+
+
 ```
 
+## Clustering
 
 ```{r, echo=TRUE}
 
-set.seed(102)
-filtered.denoised <- runTSNE(filtered.denoised, dimred="PCA")
 
 g <- buildSNNGraph(filtered.denoised, k=10, use.dimred = 'PCA')
 clust <- igraph::cluster_walktrap(g)$membership
@@ -47,16 +62,15 @@ plotReducedDim(filtered.denoised, dimred="TSNE", colour_by="cluster")
 
 ```
 
-```{r}
-library(org.Mm.eg.db)
-diffMarkers<-mapIds(eDb, keys = c("Lgr5", "Muc2", "Lyz1", "Chga", "Alpi"), 
-       column = "GENEID", keytype = "SYMBOL")
-names(diffMarkers)
-
-```
+## Examining expression of marker genes across the population
 
 
-```{r}
+![Extended Data Fig 3a from Guiu et al.](../guiu_etal_ExtData3A.png)
+t-SNE plots of epithelial cells from the proximal small intestine showing expression of intestinal stem-cell (Lgr5) and differentiation markers (Muc2, Lyz1, ChgA and Alpi.)
+
+```{r, message = FALSE, warning = FALSE, echo=TRUE}
+diffMarkers<-c("Lgr5", "Muc2", "Lyz1", "Chga", "Alpi")
+
 gridExtra::grid.arrange(
   plotReducedDim(filtered.denoised, dimred="TSNE", colour_by=diffMarkers[1]) +
     ggtitle(diffMarkers[1]),
@@ -74,11 +88,22 @@ gridExtra::grid.arrange(
 
 
 
-```{r, echo = TRUE}
+```{r, echo = TRUE, warning=FALSE}
 library(SingleR)
 ref <- MouseRNAseqData()	
 pred <- SingleR(test=filtered.denoised, ref=ref, labels=ref$label.main)
 table(pred$labels)
+filtered.denoised2<-filtered.denoised
+filtered.denoised2$anno <- factor(pred$labels)
+plotReducedDim(filtered.denoised2, dimred="TSNE", colour_by="anno")
+```
+
+Save the resulting files
+
+```{r, echo=TRUE}
+
+saveRDS(filtered.denoised, file="../processed_data/guiu_filtered_denoised.rds") 
+saveRDS(filtered.denoised2, file="../processed_data/guiu_filtered_denoised2.rds") 
 ```
 
 
