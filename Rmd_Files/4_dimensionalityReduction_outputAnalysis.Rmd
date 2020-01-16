@@ -1,0 +1,195 @@
+---
+title: "Dimensionality Reduction and Plotting"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Dependencies
+
+Load the major packages needed for this analysis first. Additional packages will be loaded as needed.
+
+```{r, message=FALSE, warning=FALSE, echo = TRUE}
+# dependencies needed
+library(SingleCellExperiment)
+library(scater)
+library(scran)
+library(uwot)
+library(Rtsne)
+```
+
+Loading the files which were output by "3_Normalization.Rmd"
+```{r, echo = TRUE}
+
+filtered<-readRDS( file="../processed_data/guiu_filtered_normalized.rds")
+filtered.var<-readRDS(file="../processed_data/filtered.var.rds")
+top.genes.varFDR<-readRDS( file="../processed_data/top.genes.varFDR.rds") 
+ 
+
+```
+
+## Dimensionality Reduction by PCA and tSNE
+
+First perform dimension reduction by Principal Components Analysis. Choose the number of PC's to retain until the percentage of variance explained reaches the sum of the biological component obtained by variance modelling in "3_Normalization.Rmd".
+```{r, echo=TRUE}
+# perform PCA for dimension reduction 
+set.seed(101)
+filtered.denoised <- denoisePCA(filtered, 
+                                subset.row=top.genes.varFDR, 
+                                technical=filtered.var)
+# convert rownames to gene symbol
+rownames(filtered.denoised)<-rowData(filtered.denoised)$Symbol
+```
+
+
+Using the above calcualted PC's perform further dimension reduction by t-SNE for visualization and compare various values for perplexity
+```{r, echo=TRUE}
+# perform tSNE with various perplexity values
+set.seed(100)
+filtered.denoised <- runTSNE(filtered.denoised, dimred="PCA", perplexity=10)
+try10 <- plotReducedDim(filtered.denoised, dimred="TSNE") + ggtitle("perplexity = 10")
+
+set.seed(101)
+filtered.denoised <- runTSNE(filtered.denoised, dimred="PCA", perplexity=30)
+try30 <- plotReducedDim(filtered.denoised, dimred="TSNE") + ggtitle("perplexity = 30")
+
+set.seed(102)
+filtered.denoised <- runTSNE(filtered.denoised, dimred="PCA", perplexity=50)
+try50 <- plotReducedDim(filtered.denoised, dimred="TSNE") + ggtitle("perplexity = 50")
+
+set.seed(103)
+filtered.denoised <- runTSNE(filtered.denoised, dimred="PCA", perplexity=75)
+try75 <- plotReducedDim(filtered.denoised, dimred="TSNE") + ggtitle("perplexity = 75")
+
+multiplot(try10, try30, try50, try75, cols=2)
+```
+
+
+## Examining expression of marker genes across the population
+
+Next, will try to recapitulate some plots from the paper. 
+![Extended Data Fig 3a from Guiu et al.](../guiu_etal_ExtData3A.png)
+Here are t-SNE plots of epithelial cells from the proximal small intestine showing expression of intestinal stem-cell (Lgr5) and differentiation markers (Muc2, Lyz1, ChgA and Alpi.)
+
+```{r, message = FALSE, warning = FALSE, echo=TRUE, fig.height= 8, fig.width=9}
+# will proceed with t-SNE plots using perplexity = 50
+set.seed(102)
+filtered.denoised <- runTSNE(filtered.denoised, dimred="PCA", perplexity=50)
+try50 <- plotReducedDim(filtered.denoised, dimred="TSNE") + ggtitle("perplexity = 50")
+
+# the markers from Guiu et all
+diffMarkers<-c("Lgr5", "Muc2", "Lyz1", "Chga", "Alpi")
+
+gridExtra::grid.arrange(
+  plotReducedDim(filtered.denoised, dimred="TSNE", colour_by=diffMarkers[1]) +
+    ggtitle(diffMarkers[1]),
+  plotReducedDim(filtered.denoised, dimred="TSNE", colour_by=diffMarkers[2]) +
+    ggtitle(diffMarkers[2]),
+  plotReducedDim(filtered.denoised, dimred="TSNE", colour_by=diffMarkers[3]) +
+    ggtitle(diffMarkers[3]),
+  plotReducedDim(filtered.denoised, dimred="TSNE", colour_by= diffMarkers[4]) +
+    ggtitle(diffMarkers[4]),
+  plotReducedDim(filtered.denoised, dimred="TSNE", colour_by= diffMarkers[5]) +
+    ggtitle(diffMarkers[5]),
+  ncol=2
+)
+```
+
+These resembled the plots from the paper figure reasonably well.
+
+## Clustering
+
+Construct a shared nearest neighbor graph with 10 nearest neighbors of each cell and the use the walktrap method to identify communities. Generate t-SNE plot colored by cluster
+
+```{r, echo=TRUE}
+#build nearest neighbor graph
+g <- buildSNNGraph(filtered.denoised, k=10, use.dimred = 'PCA')
+# idenitfy communities/clusters
+clust <- igraph::cluster_walktrap(g)$membership
+#how many clusters and how many cells per each?
+table(clust)
+#add cluster membership back to the sce as a factor
+filtered.denoised$cluster <- factor(clust)
+#color the t-SNE plot by cluster identity
+plotReducedDim(filtered.denoised, dimred="TSNE", colour_by="cluster")
+
+```
+
+## Identifying marker genes by cluster
+
+Want to identify what genes are driving the separation between clusters so we can interpret the biological meaning behind clusters based on the functional annotation of these genes. Will use the Wilcoxon rank sum test for pairwise comparision between clusters. 
+
+```{r, echo=TRUE, message=FALSE}
+markers.filtered <- findMarkers(filtered.denoised, test="wilcox",
+                                filtered.denoised$cluster, 
+                                direction="up")
+# using cluster 10 as an example
+markers_clust10<-markers.filtered[[10]]
+
+# take a look at the transcriptional profile of top genes between cluster 5 and the rest
+topGenes10 <- rownames(markers_clust5)[markers_clust10$Top <= 5]
+plotHeatmap(filtered.denoised, features=topGenes10, exprs_values="logcounts", 
+    zlim=5, center=TRUE, symmetric=TRUE, cluster_cols=FALSE,
+    colour_columns_by="cluster", columns=order(filtered.denoised$cluster),
+    show_colnames=FALSE)
+
+# consider marker genes to be differentially expressed if the adjusted p-value is <= 0.001
+deGenes10 <- markers_clust10$FDR <= 0.001 
+
+# get the EntrezIDs for the genes
+library(org.Mm.eg.db)
+eIDs <- mapIds(org.Mm.eg.db, keys=rownames(markers_clust10), 
+    column="ENTREZID", keytype="SYMBOL")
+
+library(limma)
+#test for GO over-represenation
+go.out <- goana(unique(eIDs[deGenes10]), species="Mm", 
+    universe=unique(eIDs))
+
+# re-order the rows by p-value
+go.out <- go.out[order(go.out$P.DE),]
+# filter based on biological process ontology (BP) and number of genes per annotation
+# this avoids having extremely general terms
+go.filtered <- go.out[go.out$Ont=="BP" & go.out$N <= 200,]
+head(go.filtered, 20) # look at the top 20 GO terms 
+
+
+```
+
+
+
+## Exploratory cell type annotation via reference data
+
+A preliminary attempt to predict cell types for cells in this experiemnt based on a mouse RNA-seq reference data set from the SingleR package. Generate t-SNE plot colored by cell-type annotation.
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+# load the reference data
+library(SingleR)
+ref <- MouseRNAseqData()	
+# predict cell types from reference
+pred <- SingleR(test=filtered.denoised, ref=ref, labels=ref$label.main)
+# how many cell type predictions and how many cells per annotation
+table(pred$labels)
+#add cell-type annotation back to the sce as a factor
+filtered.denoised$annotation <- factor(pred$labels)
+# color the t-SNE by cell type
+plotReducedDim(filtered.denoised, dimred="TSNE", colour_by="annotation")
+```
+
+
+
+Save the resulting files
+
+```{r, echo=TRUE}
+
+saveRDS(filtered.denoised, file="../processed_data/guiu_filtered_denoised.rds") 
+saveRDS(markers.filtered, file="../processed_data/markers_filtered.rds") 
+
+```
+
+
+```{r}
+sessionInfo()
+```

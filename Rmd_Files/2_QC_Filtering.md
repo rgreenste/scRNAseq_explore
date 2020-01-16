@@ -24,14 +24,14 @@ unfiltered <- readRDS(file="../processed_data/guiu_unfiltered.rds")
 Importing Mouse Genome Annotation
 ---------------------------------
 
-We need to import the annotation database to determine the chromsome location of genes in the mouse genome in order to annotate genes which are mitochondrial in origin
+Need to import the annotation database to determine the chromsome location of genes in the mouse genome in order to annotate genes which are mitochondrial in origin
 
 ``` r
 library(AnnotationHub) 
 ah = AnnotationHub() # create annotation hub object
 ```
 
-Now we will query annotation hub for the Ensemnl mouse annotation database version 98 and then load it.
+Now query annotation hub for the Ensemnl mouse annotation database version 98 and then load it.
 
 ``` r
 #search for and then load emsembl db v98 for mouse
@@ -121,7 +121,7 @@ head(metrics)
     ## 5     11009
     ## 6      6885
 
-Determine outlier cells based on median absolute deviation from the mean (nmads = 2) and combine into a logical, discard.
+Determine outlier cells based on median absolute deviation from the mean and combine into a logical, discard.
 
 ``` r
 # Cell library size
@@ -167,7 +167,7 @@ DataFrame(libSize=sum(rm.lib), exprs=sum(rm.exprs),
     ##   <integer> <integer>   <integer> <integer>
     ## 1       116      1101        1411      1554
 
-Now we add back to the SingleCellExperiement the calculated QC metrics via the colData slot and a new column for the discard logical
+Now add back the calculated QC metrics to the SingleCellExperiement via the colData slot and a new column for the discard logical
 
 ``` r
 # column bind the states from perCellQC to the original sce now called unfiltered
@@ -196,7 +196,7 @@ gridExtra::grid.arrange(
 
 ![](2_QC_Filtering_files/figure-markdown_github/unnamed-chunk-10-1.png)
 
-Now compare filtering metrics to each other pairwise in scatter plots colored by discard status
+Compare filtering metrics to each other pairwise in scatter plots colored by discard status
 
 ``` r
 gridExtra::grid.arrange(
@@ -216,7 +216,7 @@ Discard low quality cells
 Output into a new sce called 'filtered' all the cells which do not meet the criteria for discard and then check that the number of cells has decreased
 
 ``` r
-# Keeping the columns we DON'T want to discard.
+# keep the columns not marked for discard.
 filtered <- unfiltered[,!discard]
 dim(unfiltered) # more cells
 ```

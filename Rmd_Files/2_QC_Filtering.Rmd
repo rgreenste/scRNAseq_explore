@@ -26,14 +26,14 @@ unfiltered <- readRDS(file="../processed_data/guiu_unfiltered.rds")
 
 ## Importing Mouse Genome Annotation
 
-We need to import the annotation database to determine the chromsome location of genes in the mouse genome in order to annotate genes which are mitochondrial in origin
+Need to import the annotation database to determine the chromsome location of genes in the mouse genome in order to annotate genes which are mitochondrial in origin
 
-```{r, echo=TRUE, message = FALSE}
+```{r, echo=TRUE, message = FALSE, warning=FALSE}
 library(AnnotationHub) 
 ah = AnnotationHub() # create annotation hub object
 ```
 
-Now we will query annotation hub for the Ensemnl mouse annotation database version 98 and then load it. 
+Now query annotation hub for the Ensemnl mouse annotation database version 98 and then load it. 
 ```{r, echo=TRUE}
 #search for and then load emsembl db v98 for mouse
 dbNumber<-names(query(ah, c('Ensembl', 'musculus', 'EnsDb', '98')))
@@ -62,7 +62,7 @@ metrics <- perCellQCMetrics(unfiltered, subsets=list(Mito=mito))
 head(metrics)
 ```
 
-Determine outlier cells based on median absolute deviation from the mean (nmads = 2) and combine into a logical, discard.
+Determine outlier cells based on median absolute deviation from the mean and combine into a logical, discard.
 ```{r, echo=TRUE}
 # Cell library size
 rm.lib <- isOutlier(metrics$sum, log=TRUE, nmads = 3, type="lower")
@@ -84,7 +84,7 @@ DataFrame(libSize=sum(rm.lib), exprs=sum(rm.exprs),
            mitoPercent=sum(rm.mito), total=sum(discard))
 ```
 
-Now we add back to the SingleCellExperiement the calculated QC metrics via the colData slot and a new column for the discard logical
+Now add back the calculated QC metrics to the SingleCellExperiement via the colData slot and a new column for the discard logical
 ```{r, echo=TRUE}
 # column bind the states from perCellQC to the original sce now called unfiltered
 colData(unfiltered) <- cbind(colData(unfiltered), metrics)
@@ -109,7 +109,7 @@ gridExtra::grid.arrange(
 )
 ```
 
-Now compare filtering metrics to each other pairwise in scatter plots colored by discard status
+Compare filtering metrics to each other pairwise in scatter plots colored by discard status
 
 ```{r, echo=TRUE, fig.height= 2.5, fig.width=7}
 
