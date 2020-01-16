@@ -81,3 +81,7 @@ pred <- SingleR(test=filtered.denoised, ref=ref, labels=ref$label.main)
 table(pred$labels)
 ```
 
+
+```{r}
+sessionInfo()
+```

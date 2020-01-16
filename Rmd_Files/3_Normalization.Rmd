@@ -81,3 +81,8 @@ length(top.genes.varFDR) #1240 genes
 plotExpression(filtered, features=rownames(top.genes.var)[1:10])
 ```
 
+
+```{r}
+sessionInfo()
+```
+

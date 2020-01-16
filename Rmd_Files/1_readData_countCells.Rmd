@@ -127,3 +127,7 @@ unfiltered <- sce.guiu # save the sce post removing empty's but before additiona
 saveRDS(unfiltered, file="./processed_data/guiu_unfiltered.rds")
 ```
 
+```{r}
+sessionInfo()
+```
+

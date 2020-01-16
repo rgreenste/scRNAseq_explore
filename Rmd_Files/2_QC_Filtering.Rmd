@@ -114,3 +114,7 @@ dim(filtered) # less cells!
 saveRDS(filtered, file="./processed_data/guiu_filtered.rds") # save the sce post QC
 ```
 
+
+```{r}
+sessionInfo()
+```
