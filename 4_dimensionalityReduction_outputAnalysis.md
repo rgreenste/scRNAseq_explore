@@ -66,7 +66,7 @@ multiplot(try10, try30, try50, try75, cols=2)
 Examining expression of marker genes across the population
 ----------------------------------------------------------
 
-Next, will try to recapitulate some plots from the paper. ![Extended Data Fig 3a from Guiu et al.](../Rmd_Files/guiu_etal_ExtData3A.png) Here are t-SNE plots of epithelial cells from the proximal small intestine showing expression of intestinal stem-cell (Lgr5) and differentiation markers (Muc2, Lyz1, ChgA and Alpi.)
+Next, will try to recapitulate some plots from the paper. ![Extended Data Fig 3a from Guiu et al.](./Rmd_Files/guiu_etal_ExtData3A.png) Here are t-SNE plots of epithelial cells from the proximal small intestine showing expression of intestinal stem-cell (Lgr5) and differentiation markers (Muc2, Lyz1, ChgA and Alpi.)
 
 ``` r
 # will proceed with t-SNE plots using perplexity = 50
