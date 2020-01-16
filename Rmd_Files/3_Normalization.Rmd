@@ -20,69 +20,75 @@ library(uwot)
 library(Rtsne)
 ```
 
-```{r}
-## -- normalization by deconvolution (removing composition bias) -- ##
+
+Loading the filtered file which was output by "2_QC_Filtering.Rmd"
+```{r, echo = TRUE}
+filtered <- readRDS(file="../processed_data/guiu_filtered.rds")
+```
+
+## Removing composition bias by normalization
+
+To perform normalization by deconvolution first we have to perform a quick clustering step.
+```{r, echo=TRUE}
+
 
 library(scran)
 set.seed(100)
-clust.guiu <- quickCluster(filtered) # first do quick clustering - cells in each clusterare 
-#normalized separately and the size factors are rescaled to be comparable across clusters
+clust.guiu <- quickCluster(filtered) # first do quick clustering 
 table(clust.guiu) # how many clusters and how many cells in each
 
 
 ```
 
-```{r}
-lib.sf.guiu <- librarySizeFactors(filtered)
-summary(lib.sf.guiu)
-hist(log10(lib.sf.guiu), xlab="Log10[Size factor]", col='grey80')
-decov.sf.guiu<-calculateSumFactors(filtered, cluster=clust.guiu)
-summary(decov.sf.guiu)
-hist(log10(decov.sf.guiu), xlab="Log10[Size factor]", col='grey80')
+Next, size (sum) factors are estimated from pooled counts and then "deconvolved" to obtain value for each cell.
 
+```{r, echo=TRUE}
+filtered <- computeSumFactors(filtered, cluster=clust.guiu)
+summary(sizeFactors(filtered))
 ```
 
-```{r}
-filtered <- computeSumFactors(filtered, cluster=clust.guiu)
+Using the above calculated size factors, compute the normalized expression values for each cell. Log-transform the normalized expression values for downstream analysis
+```{r, echo=TRUE}
 filtered <- logNormCounts(filtered)
-summary(sizeFactors(filtered))
 assays(filtered) # now there are two assays the counts & the log normalized counts just made
 
 ```
 
-```{r}
-## -- modeling the variance and selection highly variable genes (HVGs) -- ##
+## Modeling the variance and selection of highly variable genes (HVGs)
 
-set.seed(101)
-filtered.pois <- modelGeneVarByPoisson(filtered)
-filtered.pois <- filtered.pois[order(filtered.pois$bio, decreasing=TRUE),]
-head(filtered.pois)
-
-top.genes <- getTopHVGs(filtered.pois, prop=0.1) # keeps the top 10% as HGVs
-length(top.genes) #1453 genes
-
-
-```
-
-```{r}
+Compute variance of the logcounts for each gene across all cells and then rank the output based on proportion of variance that is biological rather than technical.
+```{r, echo=TRUE}
 set.seed(101)
 filtered.var <- modelGeneVar(filtered)
 filtered.var <- filtered.var[order(filtered.var$bio, decreasing=TRUE),]
 head(filtered.var)
+```
 
+Select the most highly variable genes either by strict 10% proportion or by a 1% FDR threshold. See how many genes are retained by each metric.
+
+```{r, echo=TRUE}
 top.genes.var <- getTopHVGs(filtered.var, prop=0.1) # keeps the top 10% as HGVs
-length(top.genes.var) #1240 genes
-top.genes.varFDR <- getTopHVGs(filtered.var, fdr.threshold = 0.05) 
-length(top.genes.varFDR) #1240 genes
+length(top.genes.var) 
+
+top.genes.varFDR <- getTopHVGs(filtered.var, fdr.threshold = 0.01) 
+length(top.genes.varFDR) 
 
 ```
+Plot log normalized expression of genes with the largest biological component to their variance
+```{r, echo=TRUE}
+plotExpression(filtered, features=top.genes.varFDR[1:10])
+```
 
-```{r}
-plotExpression(filtered, features=rownames(top.genes.var)[1:10])
+Save out the resulting files
+
+```{r, echo=TRUE}
+
+saveRDS(filtered, file="../processed_data/guiu_filtered_normalized.rds") # save the sce post norm
+saveRDS(top.genes.varFDR, file="../processed_data/top.genes.varFDR.rds") 
+saveRDS(filtered.var, file="../processed_data/top.genes.varFDR.rds") 
 ```
 
 
-```{r}
+```{r, echo=TRUE}
 sessionInfo()
 ```
-

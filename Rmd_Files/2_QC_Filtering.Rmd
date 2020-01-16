@@ -127,7 +127,7 @@ gridExtra::grid.arrange(
 Output into a new sce called 'filtered' all the cells which do not meet the criteria for discard and then check that the number of cells has decreased
 
 ```{r, echo=TRUE}
-# Keeping the columns we DON'T want to discard.
+# keep the columns not marked for discard.
 filtered <- unfiltered[,!discard]
 dim(unfiltered) # more cells
 dim(filtered) # less cells!
